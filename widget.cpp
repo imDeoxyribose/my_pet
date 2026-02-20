@@ -8,6 +8,10 @@ Widget::Widget(QWidget *parent) : QWidget(parent) {
     cur_frame = 0;
     frame_delay = 100;
 
+    moveAnim = new QPropertyAnimation(this, "pos");
+    moveAnim->setDuration(200);
+    moveAnim->setEasingCurve(QEasingCurve::OutQuad);
+
     loadIdleAnimation();
 }
 
@@ -44,7 +48,11 @@ void Widget::paintEvent(QPaintEvent *event)
 
 void Widget::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
-        dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        if (moveAnim->state() == QPropertyAnimation::Running) {
+            moveAnim->stop();
+        }
+        mouseStartPos = event->globalPosition().toPoint();
+        dragOffset = event->globalPosition().toPoint() - frameGeometry().topLeft();
         is_dragging = true;
         event->accept();
     }
@@ -52,7 +60,7 @@ void Widget::mousePressEvent(QMouseEvent* event) {
 
 void Widget::mouseMoveEvent(QMouseEvent* event) {
     if (is_dragging && (event->buttons() & Qt::LeftButton)) {
-        move(event->globalPosition().toPoint() - dragPos);
+        move(event->globalPosition().toPoint() - dragOffset);
         event->accept();
     }
 }
@@ -60,6 +68,26 @@ void Widget::mouseMoveEvent(QMouseEvent* event) {
 void Widget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         is_dragging = false;
+
+        QPoint releasePos = pos();
+        QPoint targetPos = releasePos;
+
+        // edge detection
+        QScreen* screen = QApplication::primaryScreen();
+        QRect screenRect = screen->geometry();
+
+        if (releasePos.x() < 50) {
+            targetPos.setX(0);
+        } else if (releasePos.x() > screenRect.width() - width() - 50) {
+            targetPos.setX(screenRect.width() - width());
+        }
+
+        if (targetPos != releasePos) {
+            moveAnim->setStartValue(releasePos);
+            moveAnim->setEndValue(targetPos);
+            moveAnim->start();
+        }
+
         event->accept();
     }
 }

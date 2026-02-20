@@ -8,6 +8,8 @@
 #include <QDebug>
 #include <QTimer>
 #include <QVector>
+#include <QPropertyAnimation>
+#include <QApplication>
 
 class Widget : public QWidget
 {
@@ -31,7 +33,9 @@ private:
     QTimer *animTimer;
     int frame_delay;
 
-    QPoint dragPos;
+    QPropertyAnimation* moveAnim;
+    QPoint mouseStartPos;
+    QPoint dragOffset;
     bool is_dragging;
 };
 #endif // WIDGET_H
