@@ -41,3 +41,25 @@ void Widget::paintEvent(QPaintEvent *event)
 
     painter.drawPixmap(x, y, sPixmap);
 }
+
+void Widget::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        is_dragging = true;
+        event->accept();
+    }
+}
+
+void Widget::mouseMoveEvent(QMouseEvent* event) {
+    if (is_dragging && (event->buttons() & Qt::LeftButton)) {
+        move(event->globalPosition().toPoint() - dragPos);
+        event->accept();
+    }
+}
+
+void Widget::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        is_dragging = false;
+        event->accept();
+    }
+}

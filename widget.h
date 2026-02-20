@@ -2,6 +2,7 @@
 #define WIDGET_H
 
 #include <QWidget>
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QDebug>
@@ -18,6 +19,9 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     void loadIdleAnimation();
@@ -26,5 +30,8 @@ private:
     int cur_frame;
     QTimer *animTimer;
     int frame_delay;
+
+    QPoint dragPos;
+    bool is_dragging;
 };
 #endif // WIDGET_H
