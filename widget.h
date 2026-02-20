@@ -2,6 +2,9 @@
 #define WIDGET_H
 
 #include <QWidget>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QDebug>
 
 class Widget : public QWidget
 {
@@ -10,5 +13,8 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
 };
 #endif // WIDGET_H
