@@ -26,6 +26,11 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
+    int img_w;
+    int img_h;
+    int img_lx;
+    int img_ly;
+
     void loadIdleAnimation();
 
     QVector<QPixmap> idleFrames;

@@ -32,18 +32,18 @@ void Widget::loadIdleAnimation() {
 
 void Widget::paintEvent(QPaintEvent *event)
 {
-    int imgW = 220;
-    int imgH = 220;
+    img_w = 220;
+    img_h = 220;
 
     QPainter painter(this);
 
     QPixmap oPixmap(":/resources/images/face/face_default.png");
-    QPixmap sPixmap = oPixmap.scaled(imgW, imgH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QPixmap sPixmap = oPixmap.scaled(img_w, img_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-    int x = (width() - sPixmap.width()) / 2;
-    int y = (height() - sPixmap.height()) / 2;
+    img_lx = (width() - sPixmap.width()) / 2;
+    img_ly = (height() - sPixmap.height()) / 2;
 
-    painter.drawPixmap(x, y, sPixmap);
+    painter.drawPixmap(img_lx, img_ly, sPixmap);
 }
 
 void Widget::mousePressEvent(QMouseEvent* event) {
@@ -69,6 +69,8 @@ void Widget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         is_dragging = false;
 
+        int min_dis = 0;
+
         QPoint releasePos = pos();
         QPoint targetPos = releasePos;
 
@@ -76,10 +78,16 @@ void Widget::mouseReleaseEvent(QMouseEvent* event) {
         QScreen* screen = QApplication::primaryScreen();
         QRect screenRect = screen->geometry();
 
-        if (releasePos.x() < 50) {
-            targetPos.setX(0);
-        } else if (releasePos.x() > screenRect.width() - width() - 50) {
-            targetPos.setX(screenRect.width() - width());
+        if (releasePos.x() + img_lx < min_dis) {
+            targetPos.setX(-img_lx);
+        } else if (releasePos.x() > screenRect.width() + img_lx - width() - min_dis) {
+            targetPos.setX(screenRect.width() + img_lx - width());
+        }
+
+        if (releasePos.y() + img_ly < min_dis) {
+            targetPos.setY(-img_ly);
+        } else if (releasePos.y() > screenRect.height() + img_ly - height() - min_dis) {
+            targetPos.setY(screenRect.height() + img_ly - height());
         }
 
         if (targetPos != releasePos) {
