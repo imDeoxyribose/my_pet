@@ -4,9 +4,27 @@ Widget::Widget(QWidget *parent) : QWidget(parent) {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setFixedSize(250, 250);
+
+    cur_frame = 0;
+    frame_delay = 100;
+
+    loadIdleAnimation();
 }
 
 Widget::~Widget() {}
+
+void Widget::loadIdleAnimation() {
+    idleFrames.clear();
+    for (int i = 0; i <=6; i++) {
+        QString path = QString(":/resources/images/face/idle/%1.png").arg(i);
+        QPixmap pixmap(path);
+        if (!pixmap.isNull()) {
+            idleFrames.append(pixmap);
+        } else {
+            qDebug() << "can't load frame " << i << " path:" << path;
+        }
+    }
+}
 
 void Widget::paintEvent(QPaintEvent *event)
 {

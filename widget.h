@@ -5,6 +5,8 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QDebug>
+#include <QTimer>
+#include <QVector>
 
 class Widget : public QWidget
 {
@@ -16,5 +18,13 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+
+private:
+    void loadIdleAnimation();
+
+    QVector<QPixmap> idleFrames;
+    int cur_frame;
+    QTimer *animTimer;
+    int frame_delay;
 };
 #endif // WIDGET_H
