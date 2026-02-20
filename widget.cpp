@@ -44,6 +44,7 @@ void Widget::paintEvent(QPaintEvent *event)
     img_ly = (height() - sPixmap.height()) / 2;
 
     painter.drawPixmap(img_lx, img_ly, sPixmap);
+    painter.drawRect(img_lx, img_ly, img_w, img_h);
 }
 
 void Widget::mousePressEvent(QMouseEvent* event) {
@@ -69,7 +70,7 @@ void Widget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         is_dragging = false;
 
-        int min_dis = 0;
+        int min_dis = -30;
 
         QPoint releasePos = pos();
         QPoint targetPos = releasePos;
@@ -79,15 +80,15 @@ void Widget::mouseReleaseEvent(QMouseEvent* event) {
         QRect screenRect = screen->geometry();
 
         if (releasePos.x() + img_lx < min_dis) {
-            targetPos.setX(-img_lx);
-        } else if (releasePos.x() > screenRect.width() + img_lx - width() - min_dis) {
-            targetPos.setX(screenRect.width() + img_lx - width());
+            targetPos.setX(min_dis - img_lx);
+        } else if (releasePos.x() + img_lx + img_w > screenRect.width() - min_dis) {
+            targetPos.setX(screenRect.width() - min_dis - img_w - img_lx);
         }
 
         if (releasePos.y() + img_ly < min_dis) {
-            targetPos.setY(-img_ly);
-        } else if (releasePos.y() > screenRect.height() + img_ly - height() - min_dis) {
-            targetPos.setY(screenRect.height() + img_ly - height());
+            targetPos.setY(min_dis - img_ly);
+        } else if (releasePos.y() + img_ly + img_h > screenRect.height() - min_dis) {
+            targetPos.setY(screenRect.height() - min_dis - img_h - img_ly);
         }
 
         if (targetPos != releasePos) {
