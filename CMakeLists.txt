@@ -14,14 +14,22 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        widget.cpp
-        widget.h
+        petWindow.cpp
+        petWindow.h
+        petController.cpp
+        petController.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(my_pet
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+
+        res.qrc
+        petController.h
+        petController.cpp
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET my_pet APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

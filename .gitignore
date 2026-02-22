@@ -80,3 +80,8 @@ CMakeLists.txt.user*
 .rcc/
 .uic/
 /build*/
+CMakeLists.txt
+.vscode/c_cpp_properties.json
+CMakeLists.txt
+.vscode/settings.json
+CMakeLists.txt
