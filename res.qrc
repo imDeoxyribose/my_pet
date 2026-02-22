@@ -8,5 +8,6 @@
         <file>resources/images/face/idle/4.png</file>
         <file>resources/images/face/idle/5.png</file>
         <file>resources/images/face/idle/6.png</file>
+        <file>resources/images/eyes/eyes_default.png</file>
     </qresource>
 </RCC>
