@@ -161,5 +161,9 @@ void Widget::calculateEyesPos() {
     float offsetAmount = std::min(dis * sensitivity, maxOffset);
     QPointF offset = QPointF(nX * offsetAmount, nY * offsetAmount);
     eyesCurCenterPos = eyesBaseCenterPos + offset;
+
+    static QPointF smoothedPos = eyesBaseCenterPos;
+    smoothedPos += (eyesBaseCenterPos - smoothedPos) * 0.3;
+    eyesBaseCenterPos = smoothedPos;
 }
 
