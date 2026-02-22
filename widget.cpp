@@ -1,10 +1,41 @@
 #include "widget.h"
 
 Widget::Widget(QWidget *parent) : QWidget(parent) {
+    // window
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
-    setFixedSize(250, 250);
+    setFixedSize(300, 300);
 
+    // face
+    img_w = 220;
+    img_h = 220;
+
+    QPixmap o_facePixmap(":/resources/images/face/face_default.png");
+    facePixmap = o_facePixmap.scaled(img_w, img_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    img_lx = (width() - facePixmap.width()) / 2;
+    img_ly = (height() - facePixmap.height()) / 2;
+
+    // eyes
+    float k = 0.7; // eyes proportionality factor
+    eyes_w = img_w * k;
+    eyes_h = img_h * k / 2;
+
+    QPixmap o_eyesPixmap(":/resources/images/eyes/eyes_default.png");
+    eyesPixmap = o_eyesPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    eyesBaseCenterPos = QPointF(img_lx + img_w * 0.5, img_ly + img_h * 0.4);
+    eyesCurCenterPos = eyesBaseCenterPos;
+    maxOffset = 15;
+    sensitivity = 0.02; // eyes sensitivity factor
+
+    eyesTimer = new QTimer(this);
+    connect(eyesTimer, &QTimer::timeout, this, &Widget::updateMousePos);
+    eyesTimer->start(50);
+
+    globalMousePos = QCursor::pos();
+
+    // animation
     cur_frame = 0;
     frame_delay = 100;
 
@@ -32,19 +63,17 @@ void Widget::loadIdleAnimation() {
 
 void Widget::paintEvent(QPaintEvent *event)
 {
-    img_w = 220;
-    img_h = 220;
-
     QPainter painter(this);
 
-    QPixmap oPixmap(":/resources/images/face/face_default.png");
-    QPixmap sPixmap = oPixmap.scaled(img_w, img_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    painter.drawPixmap(img_lx, img_ly, facePixmap);
 
-    img_lx = (width() - sPixmap.width()) / 2;
-    img_ly = (height() - sPixmap.height()) / 2;
+    calculateEyesPos();
 
-    painter.drawPixmap(img_lx, img_ly, sPixmap);
+    painter.drawPixmap(toEyesCenterAlignedPos(eyesCurCenterPos).toPoint(), eyesPixmap);
+    //test
     painter.drawRect(img_lx, img_ly, img_w, img_h);
+    painter.drawRect(0, 0, width(), height());
+    painter.drawRect(toEyesCenterAlignedPos(eyesCurCenterPos).x(), toEyesCenterAlignedPos(eyesCurCenterPos).y(), eyes_w, eyes_h);
 }
 
 void Widget::mousePressEvent(QMouseEvent* event) {
@@ -100,3 +129,37 @@ void Widget::mouseReleaseEvent(QMouseEvent* event) {
         event->accept();
     }
 }
+
+QPointF Widget::toEyesCenterAlignedPos(QPointF pos) {
+    pos.setX(pos.x() - eyes_w / 2);
+    pos.setY(pos.y() - eyes_h / 2);
+    return pos;
+}
+
+void Widget::updateMousePos() {
+    QPoint newGlobalMousePos = QCursor::pos();
+    if (newGlobalMousePos != globalMousePos) {
+        globalMousePos = newGlobalMousePos;
+        update();
+    }
+}
+
+void Widget::calculateEyesPos() {
+    QPoint windowPos = this->pos();
+    QSize windowSize = this->size();
+    QPointF windowCenter = QPointF(windowPos.x() + windowSize.width() / 2, windowPos.y() + windowSize.height() / 2);
+    QPointF dir = globalMousePos - windowCenter;
+    float dis = std::sqrt(dir.x() * dir.x() + dir.y() * dir.y());
+
+    if (dis < 1.0f) {
+        eyesCurCenterPos = eyesBaseCenterPos;
+        return;
+    }
+
+    float nX = dir.x() / dis;
+    float nY = dir.y() / dis;
+    float offsetAmount = std::min(dis * sensitivity, maxOffset);
+    QPointF offset = QPointF(nX * offsetAmount, nY * offsetAmount);
+    eyesCurCenterPos = eyesBaseCenterPos + offset;
+}
+
