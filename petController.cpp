@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QtMath>
 #include <QEasingCurve>
+#include <QShortcut>
 
 PetController::PetController(PetWindow* parentWindow, QObject *parent)
     : QObject(parent), window(parentWindow), currentAnimationState(PetAnimationState::Idle) {
@@ -15,10 +16,14 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     img_lx = (window->getWindowRect().width() - facePixmap.width()) / 2;
     img_ly = (window->getWindowRect().height() - facePixmap.height()) / 2;
 
-    maxScaleX = 0.96f;
-    maxScaleY = 1.06f;
+    idleMaxScaleX = 0.96f;
+    idleMaxScaleY = 1.06f;
+    sleepMaxScaleX = 1.05f;
+    sleepMaxScaleY = 0.95f;
     m_currentScaleX = 1.0f;
     m_currentScaleY = 1.0f;
+    idleAnimDuration = 1000;
+    sleepAnimDuration = 2000;
 
     enable_EyesFollowing = true;
     maxOffset = 15;
@@ -42,13 +47,13 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     scaleXAnimation = new QPropertyAnimation(this, "currentScaleX");
     scaleXAnimation->setDuration(1000);
     scaleXAnimation->setStartValue(1.0f);
-    scaleXAnimation->setEndValue(maxScaleX);
+    scaleXAnimation->setEndValue(idleMaxScaleX);
     scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
     scaleYAnimation = new QPropertyAnimation(this, "currentScaleY");
     scaleYAnimation->setDuration(1000);
     scaleYAnimation->setStartValue(1.0f);
-    scaleYAnimation->setEndValue(maxScaleY);
+    scaleYAnimation->setEndValue(idleMaxScaleY);
     scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
     connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
@@ -69,11 +74,21 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
         scaleYAnimation->start();
     });
 
-    startIdleAnimation();
+    startAnimation(PetAnimationState::Idle);
+
+    QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Space), this);
+    shortcut->setContext(Qt::ApplicationShortcut);
+    connect(shortcut, &QShortcut::activated, this, [this]() {
+        if (currentAnimationState == PetAnimationState::Idle) {
+            setAnimationState(PetAnimationState::Sleep);
+        } else if (currentAnimationState == PetAnimationState::Sleep) {
+            setAnimationState(PetAnimationState::Idle);
+        }
+    });
 }
 
 PetController::~PetController() {
-    stopIdleAnimation();
+    stopAnimation(PetAnimationState::Idle);
 }
 
 QRect PetController::getImageRect() const {
@@ -83,7 +98,7 @@ QRect PetController::getImageRect() const {
 void PetController::render(QPainter* painter) {
     if (currentAnimationState == PetAnimationState::None) {
         painter->drawPixmap(img_lx, img_ly, facePixmap);
-    } else if (currentAnimationState == PetAnimationState::Idle) {
+    } else if (currentAnimationState == PetAnimationState::Idle || currentAnimationState == PetAnimationState::Sleep) {
         painter->save();
         
         float centerX = img_lx + img_w / 2.0f;
@@ -106,12 +121,21 @@ void PetController::render(QPainter* painter) {
 
 void PetController::setAnimationState(PetAnimationState state) {
     if (currentAnimationState != state) {
+        PetAnimationState oldState = currentAnimationState;
         currentAnimationState = state;
         
+        if (oldState == PetAnimationState::Idle) {
+            stopAnimation(PetAnimationState::Idle);
+        }
+        if (oldState == PetAnimationState::Sleep) {
+            stopAnimation(PetAnimationState::Sleep);
+        }
+        
         if (currentAnimationState == PetAnimationState::Idle) {
-            startIdleAnimation();
-        } else {
-            stopIdleAnimation();
+            startAnimation(PetAnimationState::Idle);
+        }
+        if (currentAnimationState == PetAnimationState::Sleep) {
+            startAnimation(PetAnimationState::Sleep);
         }
         
         if (window) {
@@ -144,16 +168,33 @@ void PetController::setCurrentScaleY(float scale) {
     }
 }
 
-void PetController::startIdleAnimation() {
-    if (scaleXAnimation->state() != QPropertyAnimation::Running) {
-        scaleXAnimation->start();
-    }
-    if (scaleYAnimation->state() != QPropertyAnimation::Running) {
-        scaleYAnimation->start();
+void PetController::startAnimation(PetAnimationState state) {
+    if (state == PetAnimationState::Idle) {
+        scaleXAnimation->setDuration(idleAnimDuration);
+        scaleYAnimation->setDuration(idleAnimDuration);
+        scaleXAnimation->setEndValue(idleMaxScaleX);
+        scaleYAnimation->setEndValue(idleMaxScaleY);
+        if (scaleXAnimation->state() != QPropertyAnimation::Running) {
+            scaleXAnimation->start();
+        }
+        if (scaleYAnimation->state() != QPropertyAnimation::Running) {
+            scaleYAnimation->start();
+        }
+    } else if (state == PetAnimationState::Sleep) {
+        scaleXAnimation->setDuration(sleepAnimDuration);
+        scaleYAnimation->setDuration(sleepAnimDuration);
+        scaleXAnimation->setEndValue(sleepMaxScaleX);
+        scaleYAnimation->setEndValue(sleepMaxScaleY);
+        if (scaleXAnimation->state() != QPropertyAnimation::Running) {
+            scaleXAnimation->start();
+        }
+        if (scaleYAnimation->state() != QPropertyAnimation::Running) {
+            scaleYAnimation->start();
+        }
     }
 }
 
-void PetController::stopIdleAnimation() {
+void PetController::stopAnimation(PetAnimationState state) {
     if (scaleXAnimation->state() == QPropertyAnimation::Running) {
         scaleXAnimation->stop();
     }

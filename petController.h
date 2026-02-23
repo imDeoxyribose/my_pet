@@ -15,7 +15,8 @@ class PetWindow;
 
 enum class PetAnimationState {
     None,
-    Idle
+    Idle,
+    Sleep
 };
 
 class PetController : public QObject
@@ -70,13 +71,17 @@ private:
     PetAnimationState currentAnimationState;
     QPropertyAnimation* scaleXAnimation;
     QPropertyAnimation* scaleYAnimation;
-    void startIdleAnimation();
-    void stopIdleAnimation();
+    void startAnimation(PetAnimationState state);
+    void stopAnimation(PetAnimationState state);
 
-    float maxScaleX;
-    float maxScaleY;
+    float idleMaxScaleX;
+    float idleMaxScaleY;
+    float sleepMaxScaleX;
+    float sleepMaxScaleY;
     float m_currentScaleX;
     float m_currentScaleY;
+    int idleAnimDuration;
+    int sleepAnimDuration;
 };
 
 #endif // PETCONTROLLER_H
