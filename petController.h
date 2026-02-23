@@ -7,8 +7,16 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QRect>
+#include <QVector>
+#include <QPixmap>
+#include <QMap>
 
 class PetWindow;
+
+enum class PetAnimationState {
+    None,
+    Idle
+};
 
 class PetController : public QObject
 {
@@ -20,18 +28,18 @@ public:
 
     QRect getImageRect() const;
     void render(QPainter* painter);
+    void setAnimationState(PetAnimationState state);
+    PetAnimationState getAnimationState() const;
 
 private:
     PetWindow* window;
 
-    // face
     QPixmap facePixmap;
     int img_w;
     int img_h;
     int img_lx;
     int img_ly;
 
-    // eyes following
     QPixmap eyesPixmap;
     QPointF eyesBaseCenterPos;
     QPointF eyesCurCenterPos;
@@ -48,12 +56,18 @@ private:
     void updateMousePos();
     void calculateEyesPos();
 
-    // animation
-    QVector<QPixmap> idleFrames;
+    PetAnimationState currentAnimationState;
     int cur_frame;
     QTimer *animTimer;
     int frame_delay;
-    void loadIdleAnimation();
+    void updateAnimation();
+
+    float maxScaleX;
+    float maxScaleY;
+    float currentScaleX;
+    float currentScaleY;
+    float scaleProgress;
+    bool isScalingUp;
 };
 
 #endif // PETCONTROLLER_H

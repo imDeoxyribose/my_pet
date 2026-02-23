@@ -1,10 +1,10 @@
 #include "petController.h"
 #include "petWindow.h"
+#include <QDebug>
+#include <QtMath>
 
 PetController::PetController(PetWindow* parentWindow, QObject *parent)
-    : QObject(parent), window(parentWindow) {
-
-    // face
+    : QObject(parent), window(parentWindow), currentAnimationState(PetAnimationState::Idle), cur_frame(0) {
     img_w = 220;
     img_h = 220;
 
@@ -14,20 +14,25 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     img_lx = (window->getWindowRect().width() - facePixmap.width()) / 2;
     img_ly = (window->getWindowRect().height() - facePixmap.height()) / 2;
 
-    // eyes
-    enable_EyesFollowing = true;
+    maxScaleX = 0.96f;
+    maxScaleY = 1.06f;
+    currentScaleX = 1.0f;
+    currentScaleY = 1.0f;
+    scaleProgress = 0.0f;
+    isScalingUp = true;
 
+    enable_EyesFollowing = true;
+    maxOffset = 15;
+    sensitivity = 0.02;
     float k = 0.7;
     eyes_w = img_w * k;
     eyes_h = img_h * k / 2;
+    eyesBaseCenterPos = QPointF(img_lx + img_w * 0.5, img_ly + img_h * 0.4);
+    eyesCurCenterPos = eyesBaseCenterPos;
+    globalMousePos = QCursor::pos();
 
     QPixmap o_eyesPixmap(":/resources/images/eyes/eyes_default.png");
     eyesPixmap = o_eyesPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-    eyesBaseCenterPos = QPointF(img_lx + img_w * 0.5, img_ly + img_h * 0.4);
-    eyesCurCenterPos = eyesBaseCenterPos;
-    maxOffset = 15;
-    sensitivity = 0.02;
 
     if (enable_EyesFollowing) {
         eyesTimer = new QTimer(this);
@@ -35,7 +40,10 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
         eyesTimer->start(50);
     }
 
-    globalMousePos = QCursor::pos();
+    frame_delay = 30;
+    animTimer = new QTimer(this);
+    connect(animTimer, &QTimer::timeout, this, &PetController::updateAnimation);
+    animTimer->start(frame_delay);
 }
 
 PetController::~PetController() {}
@@ -45,13 +53,73 @@ QRect PetController::getImageRect() const {
 }
 
 void PetController::render(QPainter* painter) {
-    painter->drawPixmap(img_lx, img_ly, facePixmap);
+    if (currentAnimationState == PetAnimationState::None) {
+        painter->drawPixmap(img_lx, img_ly, facePixmap);
+    } else if (currentAnimationState == PetAnimationState::Idle) {
+        painter->save();
+        
+        float centerX = img_lx + img_w / 2.0f;
+        float centerY = img_ly + img_h / 2.0f;
+        
+        painter->translate(centerX, centerY);
+        painter->scale(currentScaleX, currentScaleY);
+        painter->translate(-centerX, -centerY);
+        
+        painter->drawPixmap(img_lx, img_ly, facePixmap);
+        
+        painter->restore();
+    }
 
-    calculateEyesPos();
+    if (enable_EyesFollowing) {
+        calculateEyesPos();
+        painter->drawPixmap(toEyesCenterAlignedPos(eyesCurCenterPos).toPoint(), eyesPixmap);
+    }
+}
 
-    painter->drawPixmap(toEyesCenterAlignedPos(eyesCurCenterPos).toPoint(), eyesPixmap);
-    painter->drawRect(img_lx, img_ly, img_w, img_h);
-    painter->drawRect(toEyesCenterAlignedPos(eyesCurCenterPos).x(), toEyesCenterAlignedPos(eyesCurCenterPos).y(), eyes_w, eyes_h);
+void PetController::setAnimationState(PetAnimationState state) {
+    if (currentAnimationState != state) {
+        currentAnimationState = state;
+        //cur_frame = 0;
+        scaleProgress = 0.0f;
+        currentScaleX = 1.0f;
+        currentScaleY = 1.0f;
+        isScalingUp = true;
+        if (window) {
+            window->update();
+        }
+    }
+}
+
+PetAnimationState PetController::getAnimationState() const {
+    return currentAnimationState;
+}
+
+void PetController::updateAnimation() {
+    if (currentAnimationState == PetAnimationState::Idle) {
+        float scaleStep = 0.02f;
+        
+        if (isScalingUp) {
+            scaleProgress += scaleStep;
+            if (scaleProgress >= 1.0f) {
+                scaleProgress = 1.0f;
+                isScalingUp = false;
+            }
+        } else {
+            scaleProgress -= scaleStep;
+            if (scaleProgress <= 0.0f) {
+                scaleProgress = 0.0f;
+                isScalingUp = true;
+            }
+        }
+        
+        float easedProgress = (1.0f - M_PI_2 + M_PI * scaleProgress) / 2.0f;
+        currentScaleX = 1.0f + (maxScaleX - 1.0f) * easedProgress;
+        currentScaleY = 1.0f + (maxScaleY - 1.0f) * easedProgress;
+        
+        if (window) {
+            window->update();
+        }
+    }
 }
 
 QPointF PetController::toEyesCenterAlignedPos(QPointF pos) {
@@ -92,4 +160,3 @@ void PetController::calculateEyesPos() {
     smoothedPos += (eyesBaseCenterPos - smoothedPos) * 0.3;
     eyesBaseCenterPos = smoothedPos;
 }
-
