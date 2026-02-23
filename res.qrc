@@ -29,5 +29,6 @@
         <file>resources/images/eyes/sleep/24.png</file>
         <file>resources/images/eyes/sleep/25.png</file>
         <file>resources/images/eyes/sleep/26.png</file>
+        <file>resources/images/face/face_default.png</file>
     </qresource>
 </RCC>

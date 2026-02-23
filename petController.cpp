@@ -2,9 +2,10 @@
 #include "petWindow.h"
 #include <QDebug>
 #include <QtMath>
+#include <QEasingCurve>
 
 PetController::PetController(PetWindow* parentWindow, QObject *parent)
-    : QObject(parent), window(parentWindow), currentAnimationState(PetAnimationState::Idle), cur_frame(0) {
+    : QObject(parent), window(parentWindow), currentAnimationState(PetAnimationState::Idle) {
     img_w = 220;
     img_h = 220;
 
@@ -16,10 +17,8 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
 
     maxScaleX = 0.96f;
     maxScaleY = 1.06f;
-    currentScaleX = 1.0f;
-    currentScaleY = 1.0f;
-    scaleProgress = 0.0f;
-    isScalingUp = true;
+    m_currentScaleX = 1.0f;
+    m_currentScaleY = 1.0f;
 
     enable_EyesFollowing = true;
     maxOffset = 15;
@@ -40,13 +39,42 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
         eyesTimer->start(50);
     }
 
-    frame_delay = 30;
-    animTimer = new QTimer(this);
-    connect(animTimer, &QTimer::timeout, this, &PetController::updateAnimation);
-    animTimer->start(frame_delay);
+    scaleXAnimation = new QPropertyAnimation(this, "currentScaleX");
+    scaleXAnimation->setDuration(1000);
+    scaleXAnimation->setStartValue(1.0f);
+    scaleXAnimation->setEndValue(maxScaleX);
+    scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+    scaleYAnimation = new QPropertyAnimation(this, "currentScaleY");
+    scaleYAnimation->setDuration(1000);
+    scaleYAnimation->setStartValue(1.0f);
+    scaleYAnimation->setEndValue(maxScaleY);
+    scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+    connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
+        if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
+            scaleXAnimation->setDirection(QPropertyAnimation::Backward);
+        } else {
+            scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+        }
+        scaleXAnimation->start();
+    });
+
+    connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
+        if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
+            scaleYAnimation->setDirection(QPropertyAnimation::Backward);
+        } else {
+            scaleYAnimation->setDirection(QPropertyAnimation::Forward);
+        }
+        scaleYAnimation->start();
+    });
+
+    startIdleAnimation();
 }
 
-PetController::~PetController() {}
+PetController::~PetController() {
+    stopIdleAnimation();
+}
 
 QRect PetController::getImageRect() const {
     return QRect(img_lx, img_ly, img_w, img_h);
@@ -62,7 +90,7 @@ void PetController::render(QPainter* painter) {
         float centerY = img_ly + img_h / 2.0f;
         
         painter->translate(centerX, centerY);
-        painter->scale(currentScaleX, currentScaleY);
+        painter->scale(m_currentScaleX, m_currentScaleY);
         painter->translate(-centerX, -centerY);
         
         painter->drawPixmap(img_lx, img_ly, facePixmap);
@@ -79,11 +107,13 @@ void PetController::render(QPainter* painter) {
 void PetController::setAnimationState(PetAnimationState state) {
     if (currentAnimationState != state) {
         currentAnimationState = state;
-        //cur_frame = 0;
-        scaleProgress = 0.0f;
-        currentScaleX = 1.0f;
-        currentScaleY = 1.0f;
-        isScalingUp = true;
+        
+        if (currentAnimationState == PetAnimationState::Idle) {
+            startIdleAnimation();
+        } else {
+            stopIdleAnimation();
+        }
+        
         if (window) {
             window->update();
         }
@@ -94,31 +124,41 @@ PetAnimationState PetController::getAnimationState() const {
     return currentAnimationState;
 }
 
-void PetController::updateAnimation() {
-    if (currentAnimationState == PetAnimationState::Idle) {
-        float scaleStep = 0.02f;
-        
-        if (isScalingUp) {
-            scaleProgress += scaleStep;
-            if (scaleProgress >= 1.0f) {
-                scaleProgress = 1.0f;
-                isScalingUp = false;
-            }
-        } else {
-            scaleProgress -= scaleStep;
-            if (scaleProgress <= 0.0f) {
-                scaleProgress = 0.0f;
-                isScalingUp = true;
-            }
-        }
-        
-        float easedProgress = (1.0f - M_PI_2 + M_PI * scaleProgress) / 2.0f;
-        currentScaleX = 1.0f + (maxScaleX - 1.0f) * easedProgress;
-        currentScaleY = 1.0f + (maxScaleY - 1.0f) * easedProgress;
-        
+void PetController::setCurrentScaleX(float scale) {
+    if (qAbs(m_currentScaleX - scale) > 0.001f) {
+        m_currentScaleX = scale;
+        emit currentScaleXChanged();
         if (window) {
             window->update();
         }
+    }
+}
+
+void PetController::setCurrentScaleY(float scale) {
+    if (qAbs(m_currentScaleY - scale) > 0.001f) {
+        m_currentScaleY = scale;
+        emit currentScaleYChanged();
+        if (window) {
+            window->update();
+        }
+    }
+}
+
+void PetController::startIdleAnimation() {
+    if (scaleXAnimation->state() != QPropertyAnimation::Running) {
+        scaleXAnimation->start();
+    }
+    if (scaleYAnimation->state() != QPropertyAnimation::Running) {
+        scaleYAnimation->start();
+    }
+}
+
+void PetController::stopIdleAnimation() {
+    if (scaleXAnimation->state() == QPropertyAnimation::Running) {
+        scaleXAnimation->stop();
+    }
+    if (scaleYAnimation->state() == QPropertyAnimation::Running) {
+        scaleYAnimation->stop();
     }
 }
 

@@ -21,6 +21,8 @@ enum class PetAnimationState {
 class PetController : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(float currentScaleX READ currentScaleX WRITE setCurrentScaleX NOTIFY currentScaleXChanged)
+    Q_PROPERTY(float currentScaleY READ currentScaleY WRITE setCurrentScaleY NOTIFY currentScaleYChanged)
 
 public:
     PetController(PetWindow* parentWindow, QObject *parent = nullptr);
@@ -30,6 +32,15 @@ public:
     void render(QPainter* painter);
     void setAnimationState(PetAnimationState state);
     PetAnimationState getAnimationState() const;
+
+    float currentScaleX() const { return m_currentScaleX; }
+    float currentScaleY() const { return m_currentScaleY; }
+    void setCurrentScaleX(float scale);
+    void setCurrentScaleY(float scale);
+
+signals:
+    void currentScaleXChanged();
+    void currentScaleYChanged();
 
 private:
     PetWindow* window;
@@ -57,17 +68,15 @@ private:
     void calculateEyesPos();
 
     PetAnimationState currentAnimationState;
-    int cur_frame;
-    QTimer *animTimer;
-    int frame_delay;
-    void updateAnimation();
+    QPropertyAnimation* scaleXAnimation;
+    QPropertyAnimation* scaleYAnimation;
+    void startIdleAnimation();
+    void stopIdleAnimation();
 
     float maxScaleX;
     float maxScaleY;
-    float currentScaleX;
-    float currentScaleY;
-    float scaleProgress;
-    bool isScalingUp;
+    float m_currentScaleX;
+    float m_currentScaleY;
 };
 
 #endif // PETCONTROLLER_H
