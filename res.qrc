@@ -1,13 +1,33 @@
 <RCC>
     <qresource prefix="/">
-        <file>resources/images/face/face_default.png</file>
-        <file>resources/images/face/idle/0.png</file>
-        <file>resources/images/face/idle/1.png</file>
-        <file>resources/images/face/idle/2.png</file>
-        <file>resources/images/face/idle/3.png</file>
-        <file>resources/images/face/idle/4.png</file>
-        <file>resources/images/face/idle/5.png</file>
-        <file>resources/images/face/idle/6.png</file>
         <file>resources/images/eyes/eyes_default.png</file>
+        <file>resources/images/eyes/eyes_sleep.png</file>
+        <file>resources/images/eyes/sleep/0.png</file>
+        <file>resources/images/eyes/sleep/1.png</file>
+        <file>resources/images/eyes/sleep/2.png</file>
+        <file>resources/images/eyes/sleep/3.png</file>
+        <file>resources/images/eyes/sleep/4.png</file>
+        <file>resources/images/eyes/sleep/5.png</file>
+        <file>resources/images/eyes/sleep/6.png</file>
+        <file>resources/images/eyes/sleep/7.png</file>
+        <file>resources/images/eyes/sleep/8.png</file>
+        <file>resources/images/eyes/sleep/9.png</file>
+        <file>resources/images/eyes/sleep/10.png</file>
+        <file>resources/images/eyes/sleep/11.png</file>
+        <file>resources/images/eyes/sleep/12.png</file>
+        <file>resources/images/eyes/sleep/13.png</file>
+        <file>resources/images/eyes/sleep/14.png</file>
+        <file>resources/images/eyes/sleep/15.png</file>
+        <file>resources/images/eyes/sleep/16.png</file>
+        <file>resources/images/eyes/sleep/17.png</file>
+        <file>resources/images/eyes/sleep/18.png</file>
+        <file>resources/images/eyes/sleep/19.png</file>
+        <file>resources/images/eyes/sleep/20.png</file>
+        <file>resources/images/eyes/sleep/21.png</file>
+        <file>resources/images/eyes/sleep/22.png</file>
+        <file>resources/images/eyes/sleep/23.png</file>
+        <file>resources/images/eyes/sleep/24.png</file>
+        <file>resources/images/eyes/sleep/25.png</file>
+        <file>resources/images/eyes/sleep/26.png</file>
     </qresource>
 </RCC>
