@@ -34,9 +34,9 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     isPlayingFaceSleepTransition = false;
 
     // eyes setup
-    float k = 0.7f;
-    eyes_w = img_w * k;
-    eyes_h = img_h * k / 2;
+    float eyes_k = 0.7f;
+    eyes_w = img_w * eyes_k;
+    eyes_h = img_h * eyes_k / 2;
     QPixmap o_eyesPixmap(":/resources/images/eyes/eyes_default.png");
     eyesPixmap = o_eyesPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     eyesCenterPos = QPointF(img_lx + img_w * 0.5, img_ly + img_h * 0.4);
@@ -58,6 +58,33 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     isPlayingEyesSleepTransition = false;
     sleepFrameIndex = 0;
     sleepFrameTimer = new QTimer(this);
+
+    // Z setup
+    float Z_k = 0.3f;
+    Z_w = img_w * Z_k;
+    Z_h = img_h * Z_k;
+    QPixmap o_Z_pixmap(":/resources/images/Z/Z.png");
+    Z_pixmap = o_Z_pixmap.scaled(Z_w, Z_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    Z_pos = QPointF(img_lx + img_w * 0.7, img_ly + img_h * 0.2);
+
+    // Z sleep transition animation
+    isPlaying_Z_transition = false;
+    Z_curScaleX = 0.0f;
+    Z_curScaleY = 0.0f;
+    Z_sleepTimer = new QTimer(this);
+    Z_sleepTimer->setSingleShot(true);
+    Z_scaleXAnimation = new QPropertyAnimation(this, "Z_curScaleX");
+    Z_scaleXAnimation->setDuration(500);
+    Z_scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+    Z_scaleYAnimation = new QPropertyAnimation(this, "Z_curScaleY");
+    Z_scaleYAnimation->setDuration(500);
+    Z_scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+    // Z sleep vanish animation
+    isPlaying_Z_vanishAnimation = false;
+    Z_vanishFrameIndex = 0;
+    Z_vanishTimer = new QTimer(this);
+    load_Z_vanishFrames();
 
     // connection setup
     setupConnection();
@@ -112,6 +139,18 @@ void PetController::render(QPainter* painter) {
         }
         painter->drawPixmap(toEyesCenterAlignedPos(eyesCurCenterPos).toPoint(), eyesPixmap);
     }
+
+    // render Z
+    if (curAnimationState != PetAnimationState::None && !Z_pixmap.isNull()) {
+        float centerX = Z_pos.x() + Z_w / 2.0f;
+        float centerY = Z_pos.y() + Z_h / 2.0f;
+        painter->save();
+        painter->translate(centerX, centerY);
+        painter->scale(Z_curScaleX, Z_curScaleY);
+        painter->translate(-centerX, -centerY);
+        painter->drawPixmap(Z_pos.toPoint(), Z_pixmap);
+        painter->restore();
+    }
 }
 
 void PetController::setAnimationState(PetAnimationState state) {
@@ -126,6 +165,8 @@ void PetController::setAnimationState(PetAnimationState state) {
             stopFaceAnimation();
             stopEyesSleepTransition();
             stopEyesHomingAnimation();
+            stop_Z_sleepTransition();
+            play_Z_vanishAnimation();
         }
         
         if (curAnimationState == PetAnimationState::None) {
@@ -136,6 +177,7 @@ void PetController::setAnimationState(PetAnimationState state) {
         } else if (curAnimationState == PetAnimationState::Sleep) {
             playEyesHomingAnimation();
             playFaceSleepTransition(); // connect playFaceSleepAnimation() & playEyesSleepTransition()
+            play_Z_sleepTransition();
         }
         
         if (window) {
@@ -357,14 +399,16 @@ void PetController::playEyesHomingAnimation() {
         return;
     }
 
-    isPlayingEyesHoming = true;
+    if (curAnimationState == PetAnimationState::Sleep) {
+        isPlayingEyesHoming = true;
 
-    eyesHomingAnimation->setDuration(50);
-    eyesHomingAnimation->setStartValue(eyesCurCenterPos);
-    eyesHomingAnimation->setEndValue(eyesCenterPos);
-    eyesHomingAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        eyesHomingAnimation->setDuration(1000);
+        eyesHomingAnimation->setStartValue(eyesCurCenterPos);
+        eyesHomingAnimation->setEndValue(eyesCenterPos);
+        eyesHomingAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
-    eyesHomingAnimation->start();
+        eyesHomingAnimation->start();
+    }
 }
 
 void PetController::stopEyesHomingAnimation() {
@@ -375,14 +419,14 @@ void PetController::stopEyesHomingAnimation() {
 }
 
 void PetController::playEyesSleepTransition() {
-    if (isPlayingEyesSleepTransition) {
+    if (isPlayingEyesSleepTransition || sleepFrames.isEmpty()) {
         return;
     }
     if (curAnimationState == PetAnimationState::Sleep) {
         isPlayingEyesSleepTransition = true;
 
         sleepFrameIndex = 0;
-        sleepFrameTimer->start(20);
+        sleepFrameTimer->start(10);
     }
 }
 
@@ -414,6 +458,101 @@ void PetController::updateEyesSleepFrame() {
     }
 }
 
+void PetController::load_Z_vanishFrames() {
+    Z_vanishFrames.clear();
+    for (int i = 0; i < 17; i++) {
+        QString path = QString(":/resources/images/Z/vanish/%1.png").arg(i);
+        QPixmap pixmap(path);
+        if (pixmap.isNull()) {
+            qDebug() << "can't load sleep frame " << i << " path:" << path;
+        } else {
+            QPixmap scaledPixmap = pixmap.scaled(Z_w, Z_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            Z_vanishFrames.append(scaledPixmap);
+        }
+    }
+}
+
+void PetController::play_Z_sleepTransition() {
+    if (isPlaying_Z_transition) {
+        return;
+    }
+
+    if (Z_scaleXAnimation->state() == QPropertyAnimation::Running || Z_scaleYAnimation->state() == QPropertyAnimation::Running) {
+        qDebug() << "trying to play a running animation";
+        return;
+    }
+
+    if (curAnimationState == PetAnimationState::Sleep) {
+        isPlaying_Z_transition = true;
+
+        Z_sleepTimer->start(2000);
+
+        connect(Z_sleepTimer, &QTimer::timeout, this, [this]() {
+            Z_sleepTimer->disconnect();
+
+            Z_scaleXAnimation->setStartValue(Z_curScaleX);
+            Z_scaleXAnimation->setEndValue(1.0f);
+            Z_scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+
+            Z_scaleYAnimation->setStartValue(Z_curScaleY);
+            Z_scaleYAnimation->setEndValue(1.0f);
+            Z_scaleYAnimation->setDirection(QPropertyAnimation::Forward);
+
+            Z_scaleXAnimation->start();
+            Z_scaleYAnimation->start();
+        });
+    }
+}
+
+void PetController::stop_Z_sleepTransition() {
+    if (isPlaying_Z_transition) {
+        isPlaying_Z_transition = false;
+        Z_scaleXAnimation->stop();
+        Z_scaleYAnimation->stop();
+    }
+}
+
+void PetController::play_Z_vanishAnimation() {
+    if (isPlaying_Z_vanishAnimation || Z_vanishFrames.isEmpty()) {
+        return;
+    }
+
+    isPlaying_Z_vanishAnimation = true;
+
+    Z_vanishFrameIndex = 0;
+    Z_vanishTimer->start(10);
+}
+
+void PetController::stop_Z_vanishAnimation() {
+    if (isPlaying_Z_vanishAnimation) {
+
+        isPlaying_Z_vanishAnimation = false;
+
+        Z_vanishTimer->stop();
+        Z_vanishFrameIndex = 0;
+
+        Z_curScaleX = 0.0f;
+        Z_curScaleY = 0.0f;
+
+        Z_pixmap = QPixmap();
+        updateWindow();
+    }
+}
+
+void PetController::update_Z_vanishFrame() {
+    if (!isPlaying_Z_vanishAnimation || Z_vanishFrames.isEmpty()) {
+        return;
+    }
+
+    if (Z_vanishFrameIndex < Z_vanishFrames.size()) {
+        Z_pixmap = Z_vanishFrames[Z_vanishFrameIndex];
+        Z_vanishFrameIndex++;
+        updateWindow();
+    } else {
+        stop_Z_vanishAnimation();
+    }
+}
+
 // propertyAnimation
 
 void PetController::setCurScaleX(float scale) {
@@ -440,10 +579,27 @@ void PetController::setCurEyesPos(QPointF pos) {
     }
 }
 
+void PetController::setZ_curScaleX(float scale) {
+    if (qAbs(Z_curScaleX - scale) > 0.001f) {
+        Z_curScaleX = scale;
+        emit Z_curScaleXChanged();
+        updateWindow();
+    }
+}
+
+void PetController::setZ_curScaleY(float scale) {
+    if (qAbs(Z_curScaleY - scale) > 0.001f) {
+        Z_curScaleY = scale;
+        emit Z_curScaleYChanged();
+        updateWindow();
+    }
+}
+
 void PetController::setupConnection() {
     // timer
     connect(eyesFollowTimer, &QTimer::timeout, this, &PetController::updateEyesPos);
     connect(sleepFrameTimer, &QTimer::timeout, this, &PetController::updateEyesSleepFrame);
+    connect(Z_vanishTimer, &QTimer::timeout, this, &PetController::update_Z_vanishFrame);
 
     // propertyAnimation
     connect(eyesHomingAnimation, &QPropertyAnimation::valueChanged, this, [this](const QVariant& value) {
@@ -452,6 +608,14 @@ void PetController::setupConnection() {
     });
 
     connect(scaleXAnimation, &QPropertyAnimation::valueChanged, this, [this]() {
+        updateWindow();
+    });
+
+    connect(Z_scaleXAnimation, &QPropertyAnimation::valueChanged, this, [this]() {
+        updateWindow();
+    });
+
+    connect(Z_scaleYAnimation, &QPropertyAnimation::valueChanged, this, [this]() {
         updateWindow();
     });
 }

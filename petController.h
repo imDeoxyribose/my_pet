@@ -25,6 +25,8 @@ class PetController : public QObject
     Q_PROPERTY(float curScaleX READ curScaleX WRITE setCurScaleX NOTIFY curScaleXChanged)
     Q_PROPERTY(float curScaleY READ curScaleY WRITE setCurScaleY NOTIFY curScaleYChanged)
     Q_PROPERTY(QPointF curEyesPos READ curEyesPos WRITE setCurEyesPos NOTIFY curEyesPosChanged)
+    Q_PROPERTY(float Z_curScaleX READ get_Z_curScaleX WRITE setZ_curScaleX NOTIFY Z_curScaleXChanged)
+    Q_PROPERTY(float Z_curScaleY READ get_Z_curScaleY WRITE setZ_curScaleY NOTIFY Z_curScaleYChanged)
 
 public:
     PetController(PetWindow* parentWindow, QObject *parent = nullptr);
@@ -44,11 +46,17 @@ public:
     void setCurScaleY(float scale);
     QPointF curEyesPos() const { return eyesCurCenterPos; }
     void setCurEyesPos(QPointF pos);
+    float get_Z_curScaleX() const { return Z_curScaleX; }
+    float get_Z_curScaleY() const { return Z_curScaleY; }
+    void setZ_curScaleX(float scale);
+    void setZ_curScaleY(float scale);
 
 signals:
     void curScaleXChanged();
     void curScaleYChanged();
     void curEyesPosChanged();
+    void Z_curScaleXChanged();
+    void Z_curScaleYChanged();
 
 private:
     PetWindow* window;
@@ -115,6 +123,31 @@ private:
     void updateEyesSleepFrame();
     void playEyesSleepTransition();
     void stopEyesSleepTransition();
+
+    QPixmap Z_pixmap;
+    int Z_w;
+    int Z_h;
+    QPointF Z_pos;
+
+    // Z sleep transition animation
+    bool isPlaying_Z_transition;
+    QPropertyAnimation* Z_scaleXAnimation;
+    QPropertyAnimation* Z_scaleYAnimation;
+    float Z_curScaleX;
+    float Z_curScaleY;
+    QTimer* Z_sleepTimer;
+    void play_Z_sleepTransition();
+    void stop_Z_sleepTransition();
+
+    // Z sleep vanish animation
+    bool isPlaying_Z_vanishAnimation;
+    QVector<QPixmap> Z_vanishFrames;
+    int Z_vanishFrameIndex;
+    QTimer* Z_vanishTimer;
+    void load_Z_vanishFrames();
+    void update_Z_vanishFrame();
+    void play_Z_vanishAnimation();
+    void stop_Z_vanishAnimation();
 
     // animation state
     PetAnimationState curAnimationState;
