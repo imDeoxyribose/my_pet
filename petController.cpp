@@ -60,19 +60,18 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     sleepFrameTimer = new QTimer(this);
 
     // Z setup
-    float Z_k = 0.3f;
+    float Z_k = 0.4f;
     Z_w = img_w * Z_k;
     Z_h = img_h * Z_k;
     QPixmap o_Z_pixmap(":/resources/images/Z/Z.png");
     Z_pixmap = o_Z_pixmap.scaled(Z_w, Z_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    Z_pos = QPointF(img_lx + img_w * 0.7, img_ly + img_h * 0.2);
+    Z_pos = QPointF(img_lx + img_w * 0.55, img_ly + img_h * 0.15);
 
     // Z sleep transition animation
     isPlaying_Z_transition = false;
     Z_curScaleX = 0.0f;
     Z_curScaleY = 0.0f;
     Z_sleepTimer = new QTimer(this);
-    Z_sleepTimer->setSingleShot(true);
     Z_scaleXAnimation = new QPropertyAnimation(this, "Z_curScaleX");
     Z_scaleXAnimation->setDuration(500);
     Z_scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -480,6 +479,11 @@ void PetController::play_Z_sleepTransition() {
     if (Z_scaleXAnimation->state() == QPropertyAnimation::Running || Z_scaleYAnimation->state() == QPropertyAnimation::Running) {
         qDebug() << "trying to play a running animation";
         return;
+    }
+
+    if (Z_pixmap.isNull()) {
+        QPixmap o_Z_pixmap(":/resources/images/Z/Z.png");
+        Z_pixmap = o_Z_pixmap.scaled(Z_w, Z_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
 
     if (curAnimationState == PetAnimationState::Sleep) {
