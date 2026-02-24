@@ -173,37 +173,38 @@ void PetController::playFaceIdleAnimation() {
         qDebug() << "trying to play a running animation";
         return;
     }
+    if (curAnimationState == PetAnimationState::Idle) {
+        scaleXAnimation->setDuration(idleAnimDuration);
+        scaleXAnimation->setStartValue(1.0f);
+        scaleXAnimation->setEndValue(idleMaxScaleX);
+        scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
-    scaleXAnimation->setDuration(idleAnimDuration);
-    scaleXAnimation->setStartValue(m_curScaleX);
-    scaleXAnimation->setEndValue(idleMaxScaleX);
-    scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        scaleYAnimation->setDuration(idleAnimDuration);
+        scaleYAnimation->setStartValue(1.0f);
+        scaleYAnimation->setEndValue(idleMaxScaleY);
+        scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
-    scaleYAnimation->setDuration(idleAnimDuration);
-    scaleYAnimation->setStartValue(m_curScaleY);
-    scaleYAnimation->setEndValue(idleMaxScaleY);
-    scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
+            if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
+                scaleXAnimation->setDirection(QPropertyAnimation::Backward);
+            } else {
+                scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+            }
+            scaleXAnimation->start();
+        });
 
-    connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
-        if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
-            scaleXAnimation->setDirection(QPropertyAnimation::Backward);
-        } else {
-            scaleXAnimation->setDirection(QPropertyAnimation::Forward);
-        }
+        connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
+            if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
+                scaleYAnimation->setDirection(QPropertyAnimation::Backward);
+            } else {
+                scaleYAnimation->setDirection(QPropertyAnimation::Forward);
+            }
+            scaleYAnimation->start();
+        });
+
         scaleXAnimation->start();
-    });
-
-    connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
-        if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
-            scaleYAnimation->setDirection(QPropertyAnimation::Backward);
-        } else {
-            scaleYAnimation->setDirection(QPropertyAnimation::Forward);
-        }
         scaleYAnimation->start();
-    });
-
-    scaleXAnimation->start();
-    scaleYAnimation->start();
+    }
 }
 
 void PetController::playFaceSleepAnimation() {
@@ -248,35 +249,36 @@ void PetController::playFaceSleepTransition() {
     if (isPlayingFaceSleepTransition) {
         return;
     }
+    if (curAnimationState == PetAnimationState::Sleep) {
+        if (scaleXAnimation->state() == QPropertyAnimation::Running || scaleYAnimation->state() == QPropertyAnimation::Running) {
+            qDebug() << "trying to play a running animation";
+            return;
+        }
 
-    if (scaleXAnimation->state() == QPropertyAnimation::Running || scaleYAnimation->state() == QPropertyAnimation::Running) {
-        qDebug() << "trying to play a running animation";
-        return;
+        isPlayingFaceSleepTransition = true;
+
+        scaleXAnimation->setDuration(1000);
+        scaleXAnimation->setStartValue(m_curScaleX);
+        scaleXAnimation->setEndValue(0.96f);
+        scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+
+        scaleYAnimation->setDuration(1000);
+        scaleYAnimation->setStartValue(m_curScaleY);
+        scaleYAnimation->setEndValue(1.2f);
+        scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        scaleYAnimation->setDirection(QPropertyAnimation::Forward);
+
+        connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
+            isPlayingFaceSleepTransition = false;
+            stopFaceAnimation();
+            playFaceSleepAnimation();
+            playEyesSleepTransition();
+        });
+
+        scaleXAnimation->start();
+        scaleYAnimation->start();
     }
-
-    isPlayingFaceSleepTransition = true;
-    
-    scaleXAnimation->setDuration(1000);
-    scaleXAnimation->setStartValue(m_curScaleX);
-    scaleXAnimation->setEndValue(0.96f);
-    scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
-    scaleXAnimation->setDirection(QPropertyAnimation::Forward);
-    
-    scaleYAnimation->setDuration(1000);
-    scaleYAnimation->setStartValue(m_curScaleY);
-    scaleYAnimation->setEndValue(1.2f);
-    scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
-    scaleYAnimation->setDirection(QPropertyAnimation::Forward);
-    
-    connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
-        isPlayingFaceSleepTransition = false;
-        stopFaceAnimation();
-        playFaceSleepAnimation();
-        playEyesSleepTransition();
-    });
-
-    scaleXAnimation->start();
-    scaleYAnimation->start();
 }
 
 void PetController::stopFaceAnimation() {
@@ -376,15 +378,16 @@ void PetController::playEyesSleepTransition() {
     if (isPlayingEyesSleepTransition) {
         return;
     }
+    if (curAnimationState == PetAnimationState::Sleep) {
+        isPlayingEyesSleepTransition = true;
 
-    isPlayingEyesSleepTransition = true;
-
-    sleepFrameIndex = 0;
-    sleepFrameTimer->start(20);
+        sleepFrameIndex = 0;
+        sleepFrameTimer->start(20);
+    }
 }
 
 void PetController::stopEyesSleepTransition() {
-    if (isPlayingFaceSleepTransition) {
+    if (isPlayingEyesSleepTransition) {
 
         isPlayingEyesSleepTransition = false;
 
