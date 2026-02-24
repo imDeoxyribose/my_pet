@@ -16,8 +16,6 @@ set(PROJECT_SOURCES
         main.cpp
         petWindow.cpp
         petWindow.h
-        petController.cpp
-        petController.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

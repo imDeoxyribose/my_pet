@@ -22,29 +22,37 @@ enum class PetAnimationState {
 class PetController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(float currentScaleX READ currentScaleX WRITE setCurrentScaleX NOTIFY currentScaleXChanged)
-    Q_PROPERTY(float currentScaleY READ currentScaleY WRITE setCurrentScaleY NOTIFY currentScaleYChanged)
+    Q_PROPERTY(float curScaleX READ curScaleX WRITE setCurScaleX NOTIFY curScaleXChanged)
+    Q_PROPERTY(float curScaleY READ curScaleY WRITE setCurScaleY NOTIFY curScaleYChanged)
+    Q_PROPERTY(QPointF curEyesPos READ curEyesPos WRITE setCurEyesPos NOTIFY curEyesPosChanged)
 
 public:
     PetController(PetWindow* parentWindow, QObject *parent = nullptr);
     ~PetController();
 
     QRect getImageRect() const;
+
     void render(QPainter* painter);
+
     void setAnimationState(PetAnimationState state);
     PetAnimationState getAnimationState() const;
 
-    float currentScaleX() const { return m_currentScaleX; }
-    float currentScaleY() const { return m_currentScaleY; }
-    void setCurrentScaleX(float scale);
-    void setCurrentScaleY(float scale);
+    // propretyAnimation
+    float curScaleX() const { return m_curScaleX; }
+    float curScaleY() const { return m_curScaleY; }
+    void setCurScaleX(float scale);
+    void setCurScaleY(float scale);
+    QPointF curEyesPos() const { return eyesCurCenterPos; }
+    void setCurEyesPos(QPointF pos);
 
 signals:
-    void currentScaleXChanged();
-    void currentScaleYChanged();
+    void curScaleXChanged();
+    void curScaleYChanged();
+    void curEyesPosChanged();
 
 private:
     PetWindow* window;
+    void updateWindow();
 
     QPixmap facePixmap;
     int img_w;
@@ -52,36 +60,67 @@ private:
     int img_lx;
     int img_ly;
 
-    QPixmap eyesPixmap;
-    QPointF eyesBaseCenterPos;
-    QPointF eyesCurCenterPos;
-    QPointF globalMousePos;
-    QTimer* eyesTimer;
-
-    bool enable_EyesFollowing;
-    float maxOffset;
-    float sensitivity;
-    int eyes_w;
-    int eyes_h;
-
-    QPointF toEyesCenterAlignedPos(QPointF pos);
-    void updateMousePos();
-    void calculateEyesPos();
-
-    PetAnimationState currentAnimationState;
+    // face idle animation
     QPropertyAnimation* scaleXAnimation;
     QPropertyAnimation* scaleYAnimation;
-    void startAnimation(PetAnimationState state);
-    void stopAnimation(PetAnimationState state);
-
+    float m_curScaleX;
+    float m_curScaleY;
     float idleMaxScaleX;
     float idleMaxScaleY;
+    int idleAnimDuration;
+    void playFaceIdleAnimation();
+    void stopFaceAnimation();
+
+    // face sleep animation
     float sleepMaxScaleX;
     float sleepMaxScaleY;
-    float m_currentScaleX;
-    float m_currentScaleY;
-    int idleAnimDuration;
     int sleepAnimDuration;
+    void playFaceSleepAnimation();
+
+    // face sleep transition animation
+    bool isPlayingFaceSleepTransition;
+    void playFaceSleepTransition();
+
+    QPixmap eyesPixmap;
+    int eyes_w;
+    int eyes_h;
+    QPointF eyesSmoothedCenterPos;
+    QPointF eyesCurCenterPos;
+
+    // eyes following
+    bool isEyesFollowing;
+    float maxOffset;
+    float sensitivity;
+    QPointF globalMousePos;
+    QTimer* eyesFollowTimer;
+    void updateMousePos();
+    void updateEyesPos();
+    QPointF toEyesCenterAlignedPos(QPointF pos);
+    void startEyesFollowing();
+    void endEyesFollowing();
+
+    // eyes homing animation
+    bool isPlayingEyesHoming;
+    QPropertyAnimation* eyesHomingAnimation;
+    QPointF eyesCenterPos;
+    void playEyesHomingAnimation();
+    void stopEyesHomingAnimation();
+
+    // eyes sleep transition animation
+    bool isPlayingEyesSleepTransition;
+    QVector<QPixmap> sleepFrames;
+    int sleepFrameIndex;
+    QTimer* sleepFrameTimer;
+    void loadSleepFrames();
+    void updateEyesSleepFrame();
+    void playEyesSleepTransition();
+    void stopEyesSleepTransition();
+
+    // animation state
+    PetAnimationState curAnimationState;
+
+    // setup
+    void setupConnection();
 };
 
 #endif // PETCONTROLLER_H
