@@ -31,22 +31,22 @@
         <file>resources/images/eyes/sleep/26.png</file>
         <file>resources/images/face/face_default.png</file>
         <file>resources/images/Z/Z.png</file>
-        <file>resources/images/Z/Z_vanish/0.png</file>
-        <file>resources/images/Z/Z_vanish/1.png</file>
-        <file>resources/images/Z/Z_vanish/2.png</file>
-        <file>resources/images/Z/Z_vanish/3.png</file>
-        <file>resources/images/Z/Z_vanish/4.png</file>
-        <file>resources/images/Z/Z_vanish/5.png</file>
-        <file>resources/images/Z/Z_vanish/6.png</file>
-        <file>resources/images/Z/Z_vanish/7.png</file>
-        <file>resources/images/Z/Z_vanish/8.png</file>
-        <file>resources/images/Z/Z_vanish/9.png</file>
-        <file>resources/images/Z/Z_vanish/10.png</file>
-        <file>resources/images/Z/Z_vanish/11.png</file>
-        <file>resources/images/Z/Z_vanish/12.png</file>
-        <file>resources/images/Z/Z_vanish/13.png</file>
-        <file>resources/images/Z/Z_vanish/14.png</file>
-        <file>resources/images/Z/Z_vanish/15.png</file>
-        <file>resources/images/Z/Z_vanish/16.png</file>
+        <file>resources/images/Z/vanish/0.png</file>
+        <file>resources/images/Z/vanish/1.png</file>
+        <file>resources/images/Z/vanish/2.png</file>
+        <file>resources/images/Z/vanish/3.png</file>
+        <file>resources/images/Z/vanish/4.png</file>
+        <file>resources/images/Z/vanish/5.png</file>
+        <file>resources/images/Z/vanish/6.png</file>
+        <file>resources/images/Z/vanish/7.png</file>
+        <file>resources/images/Z/vanish/8.png</file>
+        <file>resources/images/Z/vanish/9.png</file>
+        <file>resources/images/Z/vanish/10.png</file>
+        <file>resources/images/Z/vanish/11.png</file>
+        <file>resources/images/Z/vanish/12.png</file>
+        <file>resources/images/Z/vanish/13.png</file>
+        <file>resources/images/Z/vanish/14.png</file>
+        <file>resources/images/Z/vanish/15.png</file>
+        <file>resources/images/Z/vanish/16.png</file>
     </qresource>
 </RCC>
