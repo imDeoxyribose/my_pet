@@ -190,6 +190,7 @@ private:
     template<typename Func>
     void delay(int t, PetAnimationState state, Func func);
 
+    void makeAnimLoop(QPropertyAnimation* anim);
 };
 
 #endif // PETCONTROLLER_H

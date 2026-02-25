@@ -48,7 +48,9 @@ void PetWindow::mousePressEvent(QMouseEvent* event) {
         event->accept();
 
         if (petController) {
-            petController->setAnimationState(PetAnimationState::Caught);
+            if (petController->getAnimationState() != PetAnimationState::Sleep) {
+                petController->setAnimationState(PetAnimationState::Caught);
+            }
         }
     }
 }
@@ -95,7 +97,9 @@ void PetWindow::mouseReleaseEvent(QMouseEvent* event) {
         event->accept();
 
         if (petController) {
-            petController->setAnimationState(PetAnimationState::Idle);
+            if (petController->getAnimationState() != PetAnimationState::Sleep) {
+                petController->setAnimationState(PetAnimationState::Idle);
+            }
         }
     }
 }

@@ -225,13 +225,13 @@ void PetController::playFaceIdleAnimation() {
     }
     if (curAnimationState == PetAnimationState::Idle) {
         if (qAbs(m_curScaleX - 1.0f) > 0.001f || qAbs(m_curScaleY - 1.0f) > 0.001f) {
-            scaleXAnimation->setDuration(500);
+            scaleXAnimation->setDuration(200);
             scaleXAnimation->setStartValue(m_curScaleX);
             scaleXAnimation->setEndValue(1.0f);
             scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
             scaleXAnimation->setDirection(QPropertyAnimation::Forward);
 
-            scaleYAnimation->setDuration(500);
+            scaleYAnimation->setDuration(200);
             scaleYAnimation->setStartValue(m_curScaleY);
             scaleYAnimation->setEndValue(1.0f);
             scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -252,23 +252,8 @@ void PetController::playFaceIdleAnimation() {
             scaleYAnimation->setEndValue(idleMaxScaleY);
             scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
-            connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
-                if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
-                    scaleXAnimation->setDirection(QPropertyAnimation::Backward);
-                } else {
-                    scaleXAnimation->setDirection(QPropertyAnimation::Forward);
-                }
-                scaleXAnimation->start();
-            });
-
-            connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
-                if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
-                    scaleYAnimation->setDirection(QPropertyAnimation::Backward);
-                } else {
-                    scaleYAnimation->setDirection(QPropertyAnimation::Forward);
-                }
-                scaleYAnimation->start();
-            });
+            makeAnimLoop(scaleXAnimation);
+            makeAnimLoop(scaleYAnimation);
 
             scaleXAnimation->start();
             scaleYAnimation->start();
@@ -292,23 +277,8 @@ void PetController::playFaceSleepAnimation() {
     scaleYAnimation->setEndValue(sleepMaxScaleY);
     scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
 
-    connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
-        if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
-            scaleXAnimation->setDirection(QPropertyAnimation::Backward);
-        } else {
-            scaleXAnimation->setDirection(QPropertyAnimation::Forward);
-        }
-        scaleXAnimation->start();
-    });
-
-    connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
-        if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
-            scaleYAnimation->setDirection(QPropertyAnimation::Backward);
-        } else {
-            scaleYAnimation->setDirection(QPropertyAnimation::Forward);
-        }
-        scaleYAnimation->start();
-    });
+    makeAnimLoop(scaleXAnimation);
+    makeAnimLoop(scaleYAnimation);
 
     scaleXAnimation->start();
     scaleYAnimation->start();
@@ -370,15 +340,15 @@ void PetController::playEnterFaceCaughtTransition() {
         return;
     }
     if (curAnimationState == PetAnimationState::Caught) {
-        scaleXAnimation->setDuration(300);
+        scaleXAnimation->setDuration(200);
         scaleXAnimation->setStartValue(m_curScaleX);
-        scaleXAnimation->setEndValue(1.0f);
+        scaleXAnimation->setEndValue(1.05f);
         scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
         scaleXAnimation->setDirection(QPropertyAnimation::Forward);
 
-        scaleYAnimation->setDuration(300);
+        scaleYAnimation->setDuration(200);
         scaleYAnimation->setStartValue(m_curScaleY);
-        scaleYAnimation->setEndValue(1.0f);
+        scaleYAnimation->setEndValue(1.05f);
         scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
         scaleYAnimation->setDirection(QPropertyAnimation::Forward);
 
@@ -760,5 +730,16 @@ void PetController::delay(int t, PetAnimationState state, Func func) {
         if (curAnimationState == state) {
             func();
         }
+    });
+}
+
+void PetController::makeAnimLoop(QPropertyAnimation* anim) {
+    connect(anim, &QPropertyAnimation::finished, this, [this, anim]() {
+        if (anim->direction() == QPropertyAnimation::Forward) {
+            anim->setDirection(QPropertyAnimation::Backward);
+        } else {
+            anim->setDirection(QPropertyAnimation::Forward);
+        }
+        anim->start();
     });
 }
