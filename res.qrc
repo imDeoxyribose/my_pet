@@ -48,5 +48,6 @@
         <file>resources/images/Z/vanish/14.png</file>
         <file>resources/images/Z/vanish/15.png</file>
         <file>resources/images/Z/vanish/16.png</file>
+        <file>resources/images/eyes/eyes_squeeze.png</file>
     </qresource>
 </RCC>
