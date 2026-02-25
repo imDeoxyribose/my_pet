@@ -16,7 +16,8 @@ class PetWindow;
 enum class PetAnimationState {
     None,
     Idle,
-    Sleep
+    Sleep,
+    Caught
 };
 
 class PetController : public QObject
@@ -97,6 +98,9 @@ private:
     bool isPlayingFaceSleepTransition;
     void playFaceSleepTransition();
 
+    // face caught transition animation
+    void playEnterFaceCaughtTransition();
+
     QPixmap eyesPixmap;
     int eyes_w;
     int eyes_h;
@@ -131,6 +135,10 @@ private:
     void updateEyesSleepFrame();
     void playEyesSleepTransition();
     void stopEyesSleepTransition();
+
+    // eyes caught
+    void enterEyesCaught();
+    void quitEyesCaught();
 
     QPixmap Z_pixmap;
     int Z_w;

@@ -44,6 +44,10 @@ void PetWindow::mousePressEvent(QMouseEvent* event) {
         dragOffset = event->globalPosition().toPoint() - frameGeometry().topLeft();
         is_dragging = true;
         event->accept();
+
+        if (petController) {
+            petController->setAnimationState(PetAnimationState::Caught);
+        }
     }
 }
 
@@ -87,6 +91,10 @@ void PetWindow::mouseReleaseEvent(QMouseEvent* event) {
         }
 
         event->accept();
+
+        if (petController) {
+            petController->setAnimationState(PetAnimationState::Idle);
+        }
     }
 }
 

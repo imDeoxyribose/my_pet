@@ -127,7 +127,7 @@ void PetController::render(QPainter* painter) {
     // render face
     if (curAnimationState == PetAnimationState::None) {
         painter->drawPixmap(img_lx, img_ly, facePixmap);
-    } else if (curAnimationState == PetAnimationState::Idle || curAnimationState == PetAnimationState::Sleep) {
+    } else {
         float centerX = img_lx + img_w / 2.0f;
         float centerY = img_ly + img_h / 2.0f;
         painter->save();
@@ -178,6 +178,9 @@ void PetController::setAnimationState(PetAnimationState state) {
             stop_Z_sleepTransition();
             play_Z_vanishAnimation();
             stop_Z_floatAnimation();
+        } else if (oldState == PetAnimationState::Caught) {
+            stopFaceAnimation();
+            quitEyesCaught();
         }
 
         if (curAnimationState == PetAnimationState::None) {
@@ -192,6 +195,9 @@ void PetController::setAnimationState(PetAnimationState state) {
             delay(1000, PetAnimationState::Sleep, [this]() {
                 playEyesSleepTransition();
             });
+        } else if (curAnimationState == PetAnimationState::Caught) {
+            playEnterFaceCaughtTransition();
+            enterEyesCaught();
         }
 
         if (window) {
@@ -230,36 +236,55 @@ void PetController::playFaceIdleAnimation() {
         return;
     }
     if (curAnimationState == PetAnimationState::Idle) {
-        scaleXAnimation->setDuration(idleAnimDuration);
-        scaleXAnimation->setStartValue(1.0f);
-        scaleXAnimation->setEndValue(idleMaxScaleX);
-        scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        if (qAbs(m_curScaleX - 1.0f) > 0.001f || qAbs(m_curScaleY - 1.0f) > 0.001f) {
+            scaleXAnimation->setDuration(500);
+            scaleXAnimation->setStartValue(m_curScaleX);
+            scaleXAnimation->setEndValue(1.0f);
+            scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+            scaleXAnimation->setDirection(QPropertyAnimation::Forward);
 
-        scaleYAnimation->setDuration(idleAnimDuration);
-        scaleYAnimation->setStartValue(1.0f);
-        scaleYAnimation->setEndValue(idleMaxScaleY);
-        scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+            scaleYAnimation->setDuration(500);
+            scaleYAnimation->setStartValue(m_curScaleY);
+            scaleYAnimation->setEndValue(1.0f);
+            scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+            scaleYAnimation->setDirection(QPropertyAnimation::Forward);
 
-        connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
-            if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
-                scaleXAnimation->setDirection(QPropertyAnimation::Backward);
-            } else {
-                scaleXAnimation->setDirection(QPropertyAnimation::Forward);
-            }
             scaleXAnimation->start();
-        });
+            scaleYAnimation->start();
+        }
 
-        connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
-            if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
-                scaleYAnimation->setDirection(QPropertyAnimation::Backward);
-            } else {
-                scaleYAnimation->setDirection(QPropertyAnimation::Forward);
-            }
+        delay(500, PetAnimationState::Idle, [this]() {
+            scaleXAnimation->setDuration(idleAnimDuration);
+            scaleXAnimation->setStartValue(1.0f);
+            scaleXAnimation->setEndValue(idleMaxScaleX);
+            scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+            scaleYAnimation->setDuration(idleAnimDuration);
+            scaleYAnimation->setStartValue(1.0f);
+            scaleYAnimation->setEndValue(idleMaxScaleY);
+            scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+            connect(scaleXAnimation, &QPropertyAnimation::finished, this, [this]() {
+                if (scaleXAnimation->direction() == QPropertyAnimation::Forward) {
+                    scaleXAnimation->setDirection(QPropertyAnimation::Backward);
+                } else {
+                    scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+                }
+                scaleXAnimation->start();
+            });
+
+            connect(scaleYAnimation, &QPropertyAnimation::finished, this, [this]() {
+                if (scaleYAnimation->direction() == QPropertyAnimation::Forward) {
+                    scaleYAnimation->setDirection(QPropertyAnimation::Backward);
+                } else {
+                    scaleYAnimation->setDirection(QPropertyAnimation::Forward);
+                }
+                scaleYAnimation->start();
+            });
+
+            scaleXAnimation->start();
             scaleYAnimation->start();
         });
-
-        scaleXAnimation->start();
-        scaleYAnimation->start();
     }
 }
 
@@ -345,6 +370,29 @@ void PetController::playFaceSleepTransition() {
             scaleXAnimation->start();
             scaleYAnimation->start();
         });
+
+        scaleXAnimation->start();
+        scaleYAnimation->start();
+    }
+}
+
+void PetController::playEnterFaceCaughtTransition() {
+    if (scaleXAnimation->state() == QPropertyAnimation::Running || scaleYAnimation->state() == QPropertyAnimation::Running) {
+        qDebug() << "trying to play a running animation";
+        return;
+    }
+    if (curAnimationState == PetAnimationState::Caught) {
+        scaleXAnimation->setDuration(300);
+        scaleXAnimation->setStartValue(m_curScaleX);
+        scaleXAnimation->setEndValue(1.0f);
+        scaleXAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        scaleXAnimation->setDirection(QPropertyAnimation::Forward);
+
+        scaleYAnimation->setDuration(300);
+        scaleYAnimation->setStartValue(m_curScaleY);
+        scaleYAnimation->setEndValue(1.0f);
+        scaleYAnimation->setEasingCurve(QEasingCurve::InOutSine);
+        scaleYAnimation->setDirection(QPropertyAnimation::Forward);
 
         scaleXAnimation->start();
         scaleYAnimation->start();
@@ -469,6 +517,22 @@ void PetController::stopEyesSleepTransition() {
 
         QPixmap o_eyesSleepPixmap(":/resources/images/eyes/eyes_sleep.png");
         eyesPixmap = o_eyesSleepPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        updateWindow();
+    }
+}
+
+void PetController::enterEyesCaught() {
+    if (curAnimationState == PetAnimationState::Caught) {
+        QPixmap o_eyesCaughtPixmap(":/resources/images/eyes/eyes_squeeze.png");
+        eyesPixmap = o_eyesCaughtPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        updateWindow();
+    }
+}
+
+void PetController::quitEyesCaught() {
+    if (curAnimationState != PetAnimationState::Caught) {
+        QPixmap o_eyesPixmap(":/resources/images/eyes/eyes_default.png");
+        eyesPixmap = o_eyesPixmap.scaled(eyes_w, eyes_h, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         updateWindow();
     }
 }
@@ -600,28 +664,29 @@ void PetController::stop_Z_floatAnimation() {
     if (isPlaying_Z_floatAnimation) {
         isPlaying_Z_floatAnimation = false;
         Z_floatTimer->stop();
-        //updateWindow();
     }
 }
 
 void PetController::update_Z_floatAnimation() {
-    static float floatSpeed = 0.1f;
-    static float rotationSpeed = 0.1f;
-    static float floatAmplitude = 5.0f;
-    static float rotationAmplitude = 5.0f;
-    static float time = 0.0f;
-    
-    time += 0.1f;
-    
-    float randomFactor1 = 0.5f + 0.5f * qSin(time * 0.3f);
-    float randomFactor2 = 0.5f + 0.5f * qSin(time * 0.7f);
-    
-    Z_floatY = floatAmplitude * qSin(time * floatSpeed) * randomFactor1;
-    Z_rotation = rotationAmplitude * qSin(time * rotationSpeed) * randomFactor2;
-    
-    //updateWindow();
-}
+    if (!isPlaying_Z_floatAnimation) {
+        return;
+    }
+    if (curAnimationState == PetAnimationState::Sleep) {
+        static float floatSpeed = 1.0f;
+        static float rotationSpeed = 0.5f;
+        static float floatAmplitude = 5.0f;
+        static float rotationAmplitude = 10.0f;
+        static float time = 0.0f;
 
+        time += 0.02f;
+
+        float randomFactor1 = 0.5f + 0.5f * qSin(time * 0.3f);
+        float randomFactor2 = 0.5f + 0.5f * qSin(time * 0.7f);
+
+        Z_floatY = floatAmplitude * qSin(time * floatSpeed) * randomFactor1;
+        Z_rotation = rotationAmplitude * qSin(time * rotationSpeed) * randomFactor2;
+    }
+}
 
 // propertyAnimation
 
