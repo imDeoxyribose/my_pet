@@ -9,6 +9,9 @@
 #include <QRect>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QMenu>
+#include <QContextMenuEvent>
+#include <QKeySequence>
 
 class PetController;
 
@@ -28,6 +31,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     PetController* petController;

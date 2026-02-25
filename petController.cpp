@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QtMath>
 #include <QEasingCurve>
-#include <QShortcut>
 
 PetController::PetController(PetWindow* parentWindow, QObject *parent)
     : QObject(parent), window(parentWindow), curAnimationState(PetAnimationState::None) {
@@ -101,17 +100,6 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
 
     // initialization
     setAnimationState(PetAnimationState::Idle);
-
-    //temp
-    QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Space), this);
-    shortcut->setContext(Qt::ApplicationShortcut);
-    connect(shortcut, &QShortcut::activated, this, [this]() {
-        if (curAnimationState == PetAnimationState::Idle) {
-            setAnimationState(PetAnimationState::Sleep);
-        } else if (curAnimationState == PetAnimationState::Sleep) {
-            setAnimationState(PetAnimationState::Idle);
-        }
-    });
 }
 
 PetController::~PetController() {

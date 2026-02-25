@@ -100,3 +100,66 @@ void PetWindow::mouseReleaseEvent(QMouseEvent* event) {
     }
 }
 
+void PetWindow::contextMenuEvent(QContextMenuEvent* event) {
+    QMenu menu(this);
+    
+    menu.setStyleSheet(R"(
+        QMenu {
+            background-color: #f5f5f5;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            padding: 3px;
+            font-family: "Microsoft YaHei UI", "Segoe UI", Arial;
+            font-size: 12px;
+            color: #000000;
+        }
+        QMenu::item {
+            padding: 6px 20px 6px 20px;
+            border-radius: 3px;
+            margin: 1px;
+        }
+        QMenu::item:selected {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+        QMenu::item:pressed {
+            background-color: #d0d0d0;
+        }
+        QMenu::separator {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 4px 10px;
+        }
+    )");
+    
+    // Close
+    QAction* closeAction = menu.addAction("退出");
+    closeAction->setShortcut(QKeySequence("Alt+F4"));
+    connect(closeAction, &QAction::triggered, this, []() {
+        QApplication::quit();
+    });
+    
+    menu.addSeparator();
+    
+    // Sleep / Wakeup
+    QAction* sleepAction = nullptr;
+    if (petController) {
+        PetAnimationState currentState = petController->getAnimationState();
+        if (currentState == PetAnimationState::Sleep) {
+            sleepAction = menu.addAction("唤醒");
+            sleepAction->setShortcut(QKeySequence("Space"));
+            connect(sleepAction, &QAction::triggered, this, [this]() {
+                petController->setAnimationState(PetAnimationState::Idle);
+            });
+        } else {
+            sleepAction = menu.addAction("睡觉");
+            sleepAction->setShortcut(QKeySequence("Space"));
+            connect(sleepAction, &QAction::triggered, this, [this]() {
+                petController->setAnimationState(PetAnimationState::Sleep);
+            });
+        }
+    }
+    
+    menu.exec(event->globalPos());
+}
+
