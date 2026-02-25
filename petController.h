@@ -149,11 +149,22 @@ private:
     void play_Z_vanishAnimation();
     void stop_Z_vanishAnimation();
 
+    // timer
+    QTimer* renderTimer;
+
     // animation state
     PetAnimationState curAnimationState;
 
     // setup
     void setupConnection();
+
+    // utility
+    template<typename Func>
+    void delay(int t, bool& flag, Func func);
+
+    template<typename Func>
+    void delay(int t, PetAnimationState state, Func func);
+
 };
 
 #endif // PETCONTROLLER_H
