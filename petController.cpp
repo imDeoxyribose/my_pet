@@ -84,6 +84,12 @@ PetController::PetController(PetWindow* parentWindow, QObject *parent)
     Z_vanishTimer = new QTimer(this);
     load_Z_vanishFrames();
 
+    // Z float animation
+    isPlaying_Z_floatAnimation = false;
+    Z_floatY = 0.0f;
+    Z_rotation = 0.0f;
+    Z_floatTimer = new QTimer(this);
+
     // timer
     renderTimer = new QTimer(this);
     renderTimer->start(10);
@@ -148,6 +154,8 @@ void PetController::render(QPainter* painter) {
         float centerY = Z_pos.y() + Z_h / 2.0f;
         painter->save();
         painter->translate(centerX, centerY);
+        painter->translate(0, Z_floatY);
+        painter->rotate(Z_rotation);
         painter->scale(Z_curScaleX, Z_curScaleY);
         painter->translate(-centerX, -centerY);
         painter->drawPixmap(Z_pos.toPoint(), Z_pixmap);
@@ -169,6 +177,7 @@ void PetController::setAnimationState(PetAnimationState state) {
             stopEyesHomingAnimation();
             stop_Z_sleepTransition();
             play_Z_vanishAnimation();
+            stop_Z_floatAnimation();
         }
 
         if (curAnimationState == PetAnimationState::None) {
@@ -179,10 +188,10 @@ void PetController::setAnimationState(PetAnimationState state) {
         } else if (curAnimationState == PetAnimationState::Sleep) {
             playEyesHomingAnimation();
             playFaceSleepTransition(); // connect playFaceSleepAnimation()
+            play_Z_sleepTransition();
             delay(1000, PetAnimationState::Sleep, [this]() {
                 playEyesSleepTransition();
             });
-            play_Z_sleepTransition();
         }
 
         if (window) {
@@ -520,6 +529,8 @@ void PetController::play_Z_sleepTransition() {
             Z_scaleYAnimation->setEndValue(1.0f);
             Z_scaleYAnimation->setDirection(QPropertyAnimation::Forward);
 
+            connect(Z_scaleXAnimation, &QPropertyAnimation::finished, this, &PetController::play_Z_floatAnimation, Qt::SingleShotConnection);
+
             Z_scaleXAnimation->start();
             Z_scaleYAnimation->start();
         });
@@ -575,6 +586,43 @@ void PetController::update_Z_vanishFrame() {
     }
 }
 
+void PetController::play_Z_floatAnimation() {
+    if (isPlaying_Z_floatAnimation) {
+        return;
+    }
+    if (curAnimationState == PetAnimationState::Sleep) {
+        isPlaying_Z_floatAnimation = true;
+        Z_floatTimer->start(10);
+    }
+}
+
+void PetController::stop_Z_floatAnimation() {
+    if (isPlaying_Z_floatAnimation) {
+        isPlaying_Z_floatAnimation = false;
+        Z_floatTimer->stop();
+        //updateWindow();
+    }
+}
+
+void PetController::update_Z_floatAnimation() {
+    static float floatSpeed = 0.1f;
+    static float rotationSpeed = 0.1f;
+    static float floatAmplitude = 5.0f;
+    static float rotationAmplitude = 5.0f;
+    static float time = 0.0f;
+    
+    time += 0.1f;
+    
+    float randomFactor1 = 0.5f + 0.5f * qSin(time * 0.3f);
+    float randomFactor2 = 0.5f + 0.5f * qSin(time * 0.7f);
+    
+    Z_floatY = floatAmplitude * qSin(time * floatSpeed) * randomFactor1;
+    Z_rotation = rotationAmplitude * qSin(time * rotationSpeed) * randomFactor2;
+    
+    //updateWindow();
+}
+
+
 // propertyAnimation
 
 void PetController::setCurScaleX(float scale) {
@@ -617,12 +665,29 @@ void PetController::setZ_curScaleY(float scale) {
     }
 }
 
+void PetController::set_Z_floatY(float value) {
+    if (qAbs(Z_floatY - value) > 0.001f) {
+        Z_floatY = value;
+        emit Z_floatYChanged();
+        updateWindow();
+    }
+}
+
+void PetController::set_Z_rotation(float value) {
+    if (qAbs(Z_rotation - value) > 0.001f) {
+        Z_rotation = value;
+        emit Z_rotationChanged();
+        updateWindow();
+    }
+}
+
 void PetController::setupConnection() {
     // timer
     connect(renderTimer, &QTimer::timeout, this, &PetController::updateWindow);
     connect(eyesFollowTimer, &QTimer::timeout, this, &PetController::updateEyesPos);
     connect(sleepFrameTimer, &QTimer::timeout, this, &PetController::updateEyesSleepFrame);
     connect(Z_vanishTimer, &QTimer::timeout, this, &PetController::update_Z_vanishFrame);
+    connect(Z_floatTimer, &QTimer::timeout, this, &PetController::update_Z_floatAnimation);
 }
 
 // utility

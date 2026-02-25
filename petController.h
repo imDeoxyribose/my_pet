@@ -27,6 +27,8 @@ class PetController : public QObject
     Q_PROPERTY(QPointF curEyesPos READ curEyesPos WRITE setCurEyesPos NOTIFY curEyesPosChanged)
     Q_PROPERTY(float Z_curScaleX READ get_Z_curScaleX WRITE setZ_curScaleX NOTIFY Z_curScaleXChanged)
     Q_PROPERTY(float Z_curScaleY READ get_Z_curScaleY WRITE setZ_curScaleY NOTIFY Z_curScaleYChanged)
+    Q_PROPERTY(float Z_floatY READ get_Z_floatY WRITE set_Z_floatY NOTIFY Z_floatYChanged)
+    Q_PROPERTY(float Z_rotation READ get_Z_rotation WRITE set_Z_rotation NOTIFY Z_rotationChanged)
 
 public:
     PetController(PetWindow* parentWindow, QObject *parent = nullptr);
@@ -50,6 +52,10 @@ public:
     float get_Z_curScaleY() const { return Z_curScaleY; }
     void setZ_curScaleX(float scale);
     void setZ_curScaleY(float scale);
+    float get_Z_floatY() const { return Z_floatY; }
+    void set_Z_floatY(float value);
+    float get_Z_rotation() const { return Z_rotation; }
+    void set_Z_rotation(float value);
 
 signals:
     void curScaleXChanged();
@@ -57,6 +63,8 @@ signals:
     void curEyesPosChanged();
     void Z_curScaleXChanged();
     void Z_curScaleYChanged();
+    void Z_floatYChanged();
+    void Z_rotationChanged();
 
 private:
     PetWindow* window;
@@ -148,6 +156,15 @@ private:
     void update_Z_vanishFrame();
     void play_Z_vanishAnimation();
     void stop_Z_vanishAnimation();
+
+    // Z float animation
+    bool isPlaying_Z_floatAnimation;
+    float Z_floatY;
+    float Z_rotation;
+    QTimer* Z_floatTimer;
+    void play_Z_floatAnimation();
+    void stop_Z_floatAnimation();
+    void update_Z_floatAnimation();
 
     // timer
     QTimer* renderTimer;
