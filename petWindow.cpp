@@ -9,6 +9,8 @@ PetWindow::PetWindow(QWidget *parent) : QWidget(parent), petController(nullptr) 
     dragAnim = new QPropertyAnimation(this, "pos");
     dragAnim->setDuration(200);
     dragAnim->setEasingCurve(QEasingCurve::OutQuad);
+
+    setWindowIcon(QIcon(":/resources/images/thumbnail.png"));
 }
 
 PetWindow::~PetWindow() {}
