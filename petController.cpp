@@ -543,10 +543,12 @@ void PetController::play_Z_sleepTransition() {
 
         delay(2000, isPlaying_Z_transition, [this]() {
 
+            Z_scaleXAnimation->setDuration(1000);
             Z_scaleXAnimation->setStartValue(Z_curScaleX);
             Z_scaleXAnimation->setEndValue(1.0f);
             Z_scaleXAnimation->setDirection(QPropertyAnimation::Forward);
 
+            Z_scaleYAnimation->setDuration(1000);
             Z_scaleYAnimation->setStartValue(Z_curScaleY);
             Z_scaleYAnimation->setEndValue(1.0f);
             Z_scaleYAnimation->setDirection(QPropertyAnimation::Forward);

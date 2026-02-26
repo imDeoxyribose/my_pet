@@ -16,6 +16,7 @@ set(PROJECT_SOURCES
         main.cpp
         petWindow.cpp
         petWindow.h
+        icon.rc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
