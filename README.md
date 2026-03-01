@@ -51,23 +51,20 @@ my_pet/
    ```
 
 2. **创建构建目录**
-   
    ```bash
    mkdir build
    cd build
-```
-   
+   ```
+
 3. **配置项目**
-   
    ```bash
    cmake ..
-```
-   
+   ```
+
 4. **构建项目**
-   
    ```bash
    cmake --build .
-```
+   ```
    
 
 ## 使用说明
