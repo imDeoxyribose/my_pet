@@ -12,6 +12,7 @@
 #include <QMenu>
 #include <QContextMenuEvent>
 #include <QKeySequence>
+#include <QKeyEvent>
 
 class PetController;
 
@@ -32,6 +33,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     PetController* petController;

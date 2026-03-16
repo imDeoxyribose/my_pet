@@ -167,3 +167,19 @@ void PetWindow::contextMenuEvent(QContextMenuEvent* event) {
     menu.exec(event->globalPos());
 }
 
+void PetWindow::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_Space) {
+        if (petController) {
+            PetAnimationState currentState = petController->getAnimationState();
+            if (currentState == PetAnimationState::Sleep) {
+                petController->setAnimationState(PetAnimationState::Idle);
+            } else {
+                petController->setAnimationState(PetAnimationState::Sleep);
+            }
+        }
+        event->accept();
+    } else {
+        QWidget::keyPressEvent(event);
+    }
+}
+
